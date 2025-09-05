@@ -5,55 +5,84 @@ using UnityEngine;
 
 public class PlayerStateMachine : MonoBehaviour
 {
-    public Animator animator;
-    public Rigidbody2D rb;
-    public BoxCollider2D playerCollider;
+    private Animator animator;
     
-    public float moveSpeed = 5f;
-    public float jumpForce = 10f;
-    public float crouchSpeed = 2f;
-    public Transform groundCheck;
-    public LayerMask groundLayer;
-    
-    public IState currentState;
-    
-    public PlayerIdleState idleState;
-    public PlayerRunState runState;
-    public PlayerJumpState jumpState;
-    public PlayerCrouchState crouchState;
-    public PlayerFallState fallState;
-    public PlayerHurtState hurtState;
-    public PlayerDieState dieState;
+    public AnimationClip shootClip;
+    public AnimationClip shootUpClip;
+    public AnimationClip shootDownClip;
+    public AnimationClip crouchShootClip;
+    public AnimationClip runShootClip;
+    public AnimationClip runShootUpClip;
+    public AnimationClip runShootDownClip;
+    public AnimationClip airShootClip;
+    public AnimationClip airShootUpClip;
+    public AnimationClip airShootDownClip;
+    public AnimationClip hurtClip;
+    public AnimationClip dieClip;
 
     private void Awake()
     {
-        idleState = new PlayerIdleState(this);
-        runState = new PlayerRunState(this);
-        jumpState = new PlayerJumpState(this);
-        crouchState = new PlayerCrouchState(this);
-        fallState = new PlayerFallState(this);
-        hurtState = new PlayerHurtState(this);
-        dieState = new PlayerDieState(this);
-    }
-
-    private void Start()
-    {
-        SwitchState(idleState);
-    }
-
-    private void Update()
-    {
-        if(currentState != null)
-            currentState.UpdateState();
+        animator = GetComponent<Animator>();
     }
     
-    public void SwitchState(IState newState)
+    public void SetSpeed(float speed)
     {
-        if (currentState != null)
+        animator.SetFloat("Speed", speed);
+    }
+    
+    public void SetGrounded(bool grounded)
+    {
+        animator.SetBool("IsGrounded", grounded);
+    }
+    
+    public void SetCrouching(bool isCrouching)
+    {
+        animator.SetBool("IsCrouching", isCrouching);
+    }
+
+    public void Shoot(Vector2 aimDirection, float currentSpeed, bool isCrouching, bool isGrounded)
+    {
+        animator.SetLayerWeight(animator.GetLayerIndex("Shoot Layer"), 1f);
+
+        if (isGrounded)
         {
-            currentState.ExitState();
+            if(isCrouching) animator.Play(crouchShootClip.name);
+            else if(currentSpeed > 0)
+            {
+                if (aimDirection.y > 0.5f) animator.Play(runShootUpClip.name);
+                else if (aimDirection.y < -0.5f) animator.Play(runShootDownClip.name);
+                else animator.Play(runShootClip.name);
+            }
+            else
+            {
+                if (aimDirection.y > 0.5f) animator.Play(shootUpClip.name);
+                else if (aimDirection.y < -0.5f) animator.Play(shootDownClip.name);
+                else animator.Play(shootClip.name);
+            }
         }
-        currentState = newState;
-        currentState.EnterState();
+        else
+        {
+            if (aimDirection.y > 0.5f) animator.Play(airShootUpClip.name);
+            else if (aimDirection.y < -0.5f) animator.Play(airShootDownClip.name);
+            else animator.Play(airShootClip.name);
+        }
+        
+        Invoke("ResetShootLayer", shootClip.length);
+    }
+    
+    private void ResetShootLayer()
+    {
+        animator.SetLayerWeight(animator.GetLayerIndex("Shoot Layer"), 0f);
+    }
+    
+    public void Hurt()
+    {
+        animator.Play(hurtClip.name);
+    }
+    
+    public void Die()
+    {
+        animator.SetBool("IsDead", true);
+        animator.Play(dieClip.name);
     }
 }
