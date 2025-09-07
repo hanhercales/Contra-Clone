@@ -3,8 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))] // Ensures the player always has a Rigidbody2D
 public class PlayerMovement : MonoBehaviour
 {
-    private Rigidbody2D rb;
-    private PlayerStateMachine playerStateMachine; // Reference to the FSM for calling state updates (e.g., SetGrounded)
+    public Rigidbody2D rb;
     
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float jumpForce = 10f;
@@ -13,20 +12,32 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float groundCheckRadius = 0.2f;
     
     private float horizontalInput; // Stores the current horizontal input received
-    private bool jumpInputReceived; // Flag for jump input
     private bool isFacingRight = true;
+    private bool jumpInputReceived; // Flag for jump input
+        
+    public bool isGrounded;
+    public bool isCrouching;
+    public bool isMoving;
+    public bool isDead;
+    public bool isHurt;
+    public bool isShooting;
+    public bool isAimingUp;
+    public bool isAimingDown;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        playerStateMachine = GetComponent<PlayerStateMachine>(); // Get the FSM reference
     }
 
     private void Update()
     {
         horizontalInput = Input.GetAxisRaw("Horizontal"); 
-        if (Input.GetButtonDown("Jump"))
+        if(rb.velocity != Vector2.zero) isMoving = true;
+        else isMoving = false;
+        
+        if (Input.GetKeyDown(KeyCode.Space))
         {
+            Jump();
             jumpInputReceived = true;
         }
 
@@ -47,10 +58,11 @@ public class PlayerMovement : MonoBehaviour
 
     public void Jump()
     {
-        if (playerStateMachine.IsGrounded)
+        if (isGrounded)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             jumpInputReceived = false;
+            isGrounded = false;
         }
     }
     
@@ -60,7 +72,7 @@ public class PlayerMovement : MonoBehaviour
     private void CheckIfGrounded()
     {
         bool currentlyGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-        playerStateMachine.SetPlayerGrounded(currentlyGrounded); 
+        isGrounded = currentlyGrounded;
     }
 
     private void Flip()
