@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -76,63 +75,94 @@ public class PlayerStateMachine : MonoBehaviour
 
     public PlayerState GetNextState()
     {
+        PlayerState highPriorityState = CheckHighPriorityStates();
+        if (highPriorityState != PlayerState.Idle)
+        {
+            return highPriorityState;
+        }
+        
+        // Airborne/Grounded check
+        if (!playerMovement.isGrounded)
+        {
+            return GetAirborneState();
+        }
+        else
+        {
+            return GetGroundedState();
+        }
+    }
+
+    private PlayerState CheckHighPriorityStates()
+    {
         if (playerMovement.isDead) return PlayerState.Die;
         if (playerMovement.isHurt) return PlayerState.Hurt;
-        
-        if (!playerMovement.isGrounded)
+        return PlayerState.Idle;
+    }
+
+    private PlayerState GetAirborneState()
+    {
+        if (playerMovement.isShooting)
+        {
+            return GetAirborneShootingState();
+        }
+        // If not shooting
+        else
         {
             if (playerMovement.rb.velocity.y < 0)
             {
-                // Rơi và bắn súng
-                if (playerMovement.isShooting)
-                {
-                    if (playerMovement.isAimingUp) return PlayerState.AirShootUp;
-                    if (playerMovement.isAimingDown) return PlayerState.AirShootDown;
-                    return PlayerState.AirShoot;
-                }
                 return PlayerState.Fall;
             }
-            // Đang nhảy lên
             else
             {
-                // Nhảy và bắn súng
-                if (playerMovement.isShooting)
-                {
-                    if (playerMovement.isAimingUp) return PlayerState.AirShootUp;
-                    if (playerMovement.isAimingDown) return PlayerState.AirShootDown;
-                    return PlayerState.AirShoot;
-                }
                 return PlayerState.Jump;
             }
         }
         
-        if (playerMovement.isCrouching)
-        {
-            if(playerMovement.isShooting)
-                return PlayerState.CrouchShoot;
-            return PlayerState.Crouch;
-        }
-        
-        if (playerMovement.isMoving)
-        {
-            // Đang chạy và bắn
-            if (playerMovement.isShooting)
-            {
-                if (playerMovement.isAimingUp) return PlayerState.RunShootUp;
-                if (playerMovement.isAimingDown) return PlayerState.RunShootDown;
-                return PlayerState.RunShoot;
-            }
-            return PlayerState.Run;
-        }
-        
+    }
+
+    private PlayerState GetAirborneShootingState()
+    {
         if (playerMovement.isShooting)
         {
-            if (playerMovement.isAimingUp) return PlayerState.ShootUp;
-            if (playerMovement.isAimingDown) return PlayerState.ShootDown;
-            return PlayerState.Shoot;
+            if (playerMovement.isAimingUp) return PlayerState.AirShootUp;
+            if (playerMovement.isAimingDown) return PlayerState.AirShootDown;
+            return PlayerState.AirShoot;
         }
-        
+
+        return PlayerState.Fall;
+    }
+
+    private PlayerState GetGroundedState()
+    {
+        if (playerMovement.isCrouching) return GetCrouchingState();
+        if (playerMovement.isMoving) return GetRunningState();
+        if (playerMovement.isShooting) return GetStandingShootingState();
         return PlayerState.Idle;
+    }
+
+    private PlayerState GetCrouchingState()
+    {
+        if (playerMovement.isCrouching) return PlayerState.CrouchShoot;
+        return PlayerState.Crouch;
+    }
+
+    private PlayerState GetRunningState()
+    {
+        if (playerMovement.isShooting)
+        {
+            if (playerMovement.isAimingUp) return PlayerState.RunShootUp;
+            if (playerMovement.isAimingDown) return PlayerState.RunShootDown;
+            return PlayerState.RunShoot;
+        }
+
+        return PlayerState.Run;
+    }
+
+    private PlayerState GetStandingShootingState()
+    {
+        if (playerMovement.isAimingUp) return PlayerState.RunShootUp;
+        if (playerMovement.isAimingDown) return PlayerState.RunShootDown;
+        return PlayerState.Shoot;
     }
 
     public void ChangeState(PlayerState newState)

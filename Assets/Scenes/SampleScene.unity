@@ -571,8 +571,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 0}
-  moveSpeed: 5
-  jumpForce: 10
+  moveSpeed: 3
+  jumpForce: 6
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
