@@ -160,8 +160,8 @@ public class PlayerStateMachine : MonoBehaviour
 
     private PlayerState GetStandingShootingState()
     {
-        if (playerMovement.isAimingUp) return PlayerState.RunShootUp;
-        if (playerMovement.isAimingDown) return PlayerState.RunShootDown;
+        if (playerMovement.isAimingUp) return PlayerState.ShootUp;
+        if (playerMovement.isAimingDown) return PlayerState.ShootDown;
         return PlayerState.Shoot;
     }
 
