@@ -11,9 +11,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Transform groundCheck; // A point to check if the player is grounded
     [SerializeField] private float groundCheckRadius = 0.2f;
     
+    // Collider adjustment
+    [SerializeField] private Collider2D playerCollider;
+    private Vector2 originalColliderSize;
+    private Vector2 originalColliderOffset;
+    
     private float horizontalInput; // Stores the current horizontal input received
     private bool isFacingRight = true;
-    private bool canMove = true;
         
     public bool isGrounded;
     public bool isCrouching;
@@ -27,6 +31,18 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        if (playerCollider != null)
+        {
+            if (playerCollider is BoxCollider2D boxCollider)
+            {
+                originalColliderSize = boxCollider.size;
+                originalColliderOffset = boxCollider.offset;
+            }
+            else
+            {
+                Debug.LogWarning("Player collider is not a BoxCollider2D");
+            }
+        }
     }
 
     private void Update()
@@ -35,20 +51,43 @@ public class PlayerMovement : MonoBehaviour
         if(rb.velocity != Vector2.zero) isMoving = true;
         else isMoving = false;
         
+        // Jumping
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Jump();
         }
 
-        Crouch();
+        // Crouching
+        if (Input.GetKey(KeyCode.LeftShift) && isGrounded)
+        {
+            Crouch();
+        }
+        else if (Input.GetKeyUp(KeyCode.LeftShift) || (!isGrounded && isCrouching))
+        {
+            StopCrouching();
+        }
         
+        // Shooting and Aiming
+        isShooting = Input.GetKey(KeyCode.J); // Shooting
+        isAimingUp = Input.GetKey(KeyCode.W); // Aiming up
+        isAimingDown = Input.GetKey(KeyCode.S) && !isCrouching; // Aiming down
+
         CheckIfGrounded();
     }
 
     private void FixedUpdate()
     {
-        if(canMove)
+        if (isCrouching)
+        {
+            rb.velocity = new Vector2(0f, rb.velocity.y);
+            isMoving = false; // Set isMoving to false
+        }
+        else
+        {
             rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+            isMoving = (horizontalInput != 0);
+        }
+
         Flip();
     }
     
@@ -60,27 +99,41 @@ public class PlayerMovement : MonoBehaviour
 
     public void Jump()
     {
-        if (isGrounded)
+        if (isGrounded && !isCrouching)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             isGrounded = false;
+
+            if (isCrouching) StopCrouching();
         }
     }
 
     public void Crouch()
     {
-        if (Input.GetKey(KeyCode.LeftControl))
+        if (!isCrouching && isGrounded)
         {
             isCrouching = true;
-            canMove = false;
+            if (playerCollider is BoxCollider2D boxCollider)
+            {
+                boxCollider.size = new Vector2(originalColliderSize.x, originalColliderSize.y * 0.5f);
+                boxCollider.offset = new Vector2(originalColliderOffset.x, originalColliderOffset.y - originalColliderSize.y * 0.25f);
+            }
         }
-        else if(Input.GetKeyUp(KeyCode.LeftControl))
+    }
+
+    public void StopCrouching()
+    {
+        if (isCrouching)
         {
             isCrouching = false;
-            canMove = true;
+            if (playerCollider is BoxCollider2D boxCollider)
+            {
+                boxCollider.size = originalColliderSize;
+                boxCollider.offset = originalColliderOffset;
+            }
         }
-        
     }
+    
     // public void StopMovement() { rb.velocity = new Vector2(0, rb.velocity.y); }
 
     private void CheckIfGrounded()
@@ -91,6 +144,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void Flip()
     {
+        if (isCrouching || isDead || isHurt) return;
+        
         if ((isFacingRight && horizontalInput < 0f) || (!isFacingRight && horizontalInput > 0f))
         {
             isFacingRight = !isFacingRight;
