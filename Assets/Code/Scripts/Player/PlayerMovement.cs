@@ -58,11 +58,11 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Crouching
-        if (Input.GetKey(KeyCode.LeftShift) && isGrounded)
+        if (Input.GetKey(KeyCode.LeftControl) && isGrounded)
         {
             Crouch();
         }
-        else if (Input.GetKeyUp(KeyCode.LeftShift) || (!isGrounded && isCrouching))
+        else if (Input.GetKeyUp(KeyCode.LeftControl) || (!isGrounded && isCrouching))
         {
             StopCrouching();
         }
