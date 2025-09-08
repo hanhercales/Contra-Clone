@@ -13,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
     
     private float horizontalInput; // Stores the current horizontal input received
     private bool isFacingRight = true;
-    private bool jumpInputReceived; // Flag for jump input
+    private bool canMove = true;
         
     public bool isGrounded;
     public bool isCrouching;
@@ -38,15 +38,17 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Jump();
-            jumpInputReceived = true;
         }
 
+        Crouch();
+        
         CheckIfGrounded();
     }
 
     private void FixedUpdate()
     {
-        rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+        if(canMove)
+            rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
         Flip();
     }
     
@@ -61,12 +63,24 @@ public class PlayerMovement : MonoBehaviour
         if (isGrounded)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-            jumpInputReceived = false;
             isGrounded = false;
         }
     }
-    
-    // public void Crouch() { ... }
+
+    public void Crouch()
+    {
+        if (Input.GetKey(KeyCode.LeftControl))
+        {
+            isCrouching = true;
+            canMove = false;
+        }
+        else if(Input.GetKeyUp(KeyCode.LeftControl))
+        {
+            isCrouching = false;
+            canMove = true;
+        }
+        
+    }
     // public void StopMovement() { rb.velocity = new Vector2(0, rb.velocity.y); }
 
     private void CheckIfGrounded()

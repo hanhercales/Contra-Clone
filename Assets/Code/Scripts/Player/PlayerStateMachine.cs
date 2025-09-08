@@ -108,14 +108,7 @@ public class PlayerStateMachine : MonoBehaviour
         // If not shooting
         else
         {
-            if (playerMovement.rb.velocity.y < 0)
-            {
-                return PlayerState.Fall;
-            }
-            else
-            {
-                return PlayerState.Jump;
-            }
+            return PlayerState.Jump;
         }
         
     }
@@ -142,7 +135,7 @@ public class PlayerStateMachine : MonoBehaviour
 
     private PlayerState GetCrouchingState()
     {
-        if (playerMovement.isCrouching) return PlayerState.CrouchShoot;
+        if (playerMovement.isShooting) return PlayerState.CrouchShoot;
         return PlayerState.Crouch;
     }
 
@@ -160,8 +153,8 @@ public class PlayerStateMachine : MonoBehaviour
 
     private PlayerState GetStandingShootingState()
     {
-        if (playerMovement.isAimingUp) return PlayerState.RunShootUp;
-        if (playerMovement.isAimingDown) return PlayerState.RunShootDown;
+        if (playerMovement.isAimingUp) return PlayerState.ShootUp;
+        if (playerMovement.isAimingDown) return PlayerState.ShootDown;
         return PlayerState.Shoot;
     }
 
