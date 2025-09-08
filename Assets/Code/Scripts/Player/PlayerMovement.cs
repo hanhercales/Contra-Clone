@@ -5,8 +5,8 @@ public class PlayerMovement : MonoBehaviour
 {
     public Rigidbody2D rb;
     
-    [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float jumpForce = 10f;
+    [SerializeField] private float moveSpeed = 3f;
+    [SerializeField] private float jumpForce = 6f;
     [SerializeField] private LayerMask groundLayer; // Define what is considered 'ground'
     [SerializeField] private Transform groundCheck; // A point to check if the player is grounded
     [SerializeField] private float groundCheckRadius = 0.2f;
