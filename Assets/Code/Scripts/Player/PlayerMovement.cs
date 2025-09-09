@@ -17,7 +17,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 originalColliderOffset;
     
     private float horizontalInput; // Stores the current horizontal input received
-    private bool isFacingRight = true;
+    public bool isFacingRight {private set; get;} = true;
         
     public bool isGrounded;
     public bool isCrouching;
