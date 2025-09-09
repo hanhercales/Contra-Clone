@@ -1,88 +1,176 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerStateMachine : MonoBehaviour
 {
-    private Animator animator;
+    public enum PlayerState
+    {
+        Idle,
+        Run,
+        Jump,
+        Crouch,
+        Fall,
+        Hurt,
+        Die,
+        Shoot,
+        ShootUp,
+        ShootDown,
+        RunShoot,
+        RunShootUp,
+        RunShootDown,
+        CrouchShoot,
+        AirShoot,
+        AirShootUp,
+        AirShootDown,
+    }
     
-    public AnimationClip shootClip;
-    public AnimationClip shootUpClip;
-    public AnimationClip shootDownClip;
-    public AnimationClip crouchShootClip;
-    public AnimationClip runShootClip;
-    public AnimationClip runShootUpClip;
-    public AnimationClip runShootDownClip;
-    public AnimationClip airShootClip;
-    public AnimationClip airShootUpClip;
-    public AnimationClip airShootDownClip;
-    public AnimationClip hurtClip;
-    public AnimationClip dieClip;
+    public PlayerState currentState;
+    
+    public Animator animator;
+    
+    public Dictionary<PlayerState, string> stateAnimations;
 
+    private PlayerMovement playerMovement;
+    
     private void Awake()
     {
-        animator = GetComponent<Animator>();
+        playerMovement = GetComponent<PlayerMovement>();
     }
     
-    public void SetSpeed(float speed)
+    private void Start()
     {
-        animator.SetFloat("Speed", speed);
-    }
-    
-    public void SetGrounded(bool grounded)
-    {
-        animator.SetBool("IsGrounded", grounded);
-    }
-    
-    public void SetCrouching(bool isCrouching)
-    {
-        animator.SetBool("IsCrouching", isCrouching);
-    }
-
-    public void Shoot(Vector2 aimDirection, float currentSpeed, bool isCrouching, bool isGrounded)
-    {
-        animator.SetLayerWeight(animator.GetLayerIndex("Shoot Layer"), 1f);
-
-        if (isGrounded)
+        stateAnimations = new Dictionary<PlayerState, string>
         {
-            if(isCrouching) animator.Play(crouchShootClip.name);
-            else if(currentSpeed > 0)
-            {
-                if (aimDirection.y > 0.5f) animator.Play(runShootUpClip.name);
-                else if (aimDirection.y < -0.5f) animator.Play(runShootDownClip.name);
-                else animator.Play(runShootClip.name);
-            }
-            else
-            {
-                if (aimDirection.y > 0.5f) animator.Play(shootUpClip.name);
-                else if (aimDirection.y < -0.5f) animator.Play(shootDownClip.name);
-                else animator.Play(shootClip.name);
-            }
+            { PlayerState.Idle, "Idle" },
+            { PlayerState.Run, "Run" },
+            { PlayerState.Jump, "Jump" },
+            { PlayerState.Crouch, "Crouch" },
+            { PlayerState.Fall, "Fall" },
+            { PlayerState.Hurt, "Hurt" },
+            { PlayerState.Die, "Die" },
+            { PlayerState.Shoot, "Shoot" },
+            { PlayerState.ShootUp, "ShootUp"},
+            { PlayerState.ShootDown, "ShootDown" },
+            { PlayerState.RunShoot, "RunShoot" },
+            { PlayerState.RunShootUp, "RunShootUp" },
+            { PlayerState.RunShootDown, "RunShootDown" },
+            { PlayerState.CrouchShoot, "CrouchShoot" },
+            { PlayerState.AirShoot, "AirShoot" },
+            { PlayerState.AirShootUp, "AirShootUp" },
+            { PlayerState.AirShootDown, "AirShootDown" }
+        };
+        
+        ChangeState(PlayerState.Idle);
+    }
+
+    private void Update()
+    {
+        PlayerState newState = GetNextState();
+        
+        if (currentState != newState)
+        {
+            ChangeState(newState);
+        }
+    }
+
+    public PlayerState GetNextState()
+    {
+        PlayerState highPriorityState = CheckHighPriorityStates();
+        if (highPriorityState != PlayerState.Idle)
+        {
+            return highPriorityState;
+        }
+        
+        // Airborne/Grounded check
+        if (!playerMovement.isGrounded)
+        {
+            return GetAirborneState();
         }
         else
         {
-            if (aimDirection.y > 0.5f) animator.Play(airShootUpClip.name);
-            else if (aimDirection.y < -0.5f) animator.Play(airShootDownClip.name);
-            else animator.Play(airShootClip.name);
+            return GetGroundedState();
+        }
+    }
+
+    private PlayerState CheckHighPriorityStates()
+    {
+        if (playerMovement.isDead) return PlayerState.Die;
+        if (playerMovement.isHurt) return PlayerState.Hurt;
+        return PlayerState.Idle;
+    }
+
+    private PlayerState GetAirborneState()
+    {
+        if (playerMovement.isShooting)
+        {
+            return GetAirborneShootingState();
+        }
+        // If not shooting
+        else
+        {
+            return PlayerState.Jump;
         }
         
-        Invoke("ResetShootLayer", shootClip.length);
     }
-    
-    private void ResetShootLayer()
+
+    private PlayerState GetAirborneShootingState()
     {
-        animator.SetLayerWeight(animator.GetLayerIndex("Shoot Layer"), 0f);
+        if (playerMovement.isShooting)
+        {
+            if (playerMovement.isAimingUp) return PlayerState.AirShootUp;
+            if (playerMovement.isAimingDown) return PlayerState.AirShootDown;
+            return PlayerState.AirShoot;
+        }
+
+        return PlayerState.Fall;
     }
-    
-    public void Hurt()
+
+    private PlayerState GetGroundedState()
     {
-        animator.Play(hurtClip.name);
+        if (playerMovement.isCrouching) return GetCrouchingState();
+        if (playerMovement.isMoving) return GetRunningState();
+        if (playerMovement.isShooting) return GetStandingShootingState();
+        return PlayerState.Idle;
     }
-    
-    public void Die()
+
+    private PlayerState GetCrouchingState()
     {
-        animator.SetBool("IsDead", true);
-        animator.Play(dieClip.name);
+        if (playerMovement.isShooting) return PlayerState.CrouchShoot;
+        return PlayerState.Crouch;
+    }
+
+    private PlayerState GetRunningState()
+    {
+        if (playerMovement.isShooting)
+        {
+            if (playerMovement.isAimingUp) return PlayerState.RunShootUp;
+            if (playerMovement.isAimingDown) return PlayerState.RunShootDown;
+            return PlayerState.RunShoot;
+        }
+
+        return PlayerState.Run;
+    }
+
+    private PlayerState GetStandingShootingState()
+    {
+        if (playerMovement.isAimingUp) return PlayerState.ShootUp;
+        if (playerMovement.isAimingDown) return PlayerState.ShootDown;
+        return PlayerState.Shoot;
+    }
+
+    public void ChangeState(PlayerState newState)
+    {
+        if (currentState == newState) return;
+        
+        currentState = newState;
+        if (stateAnimations.ContainsKey(newState))
+        {
+            Debug.Log("Changing state to: " + stateAnimations[newState]);
+            animator.Play(stateAnimations[newState]);
+        }
+        else
+        {
+            Debug.LogError("Animation not found for state: " + newState);
+        }
     }
 }
