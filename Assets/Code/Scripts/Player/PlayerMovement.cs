@@ -16,6 +16,9 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 originalColliderSize;
     private Vector2 originalColliderOffset;
     
+    [SerializeField] private float fastFallMultiplier = 2.0f;
+    public bool isFastFalling;
+    
     private float horizontalInput; // Stores the current horizontal input received
     public bool isFacingRight {private set; get;} = true;
         
@@ -28,9 +31,13 @@ public class PlayerMovement : MonoBehaviour
     public bool isAimingUp;
     public bool isAimingDown;
 
+    private float originalGravityScale;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        originalGravityScale = rb.gravityScale;
+        
         if (playerCollider != null)
         {
             if (playerCollider is BoxCollider2D boxCollider)
@@ -71,6 +78,15 @@ public class PlayerMovement : MonoBehaviour
         isShooting = Input.GetKey(KeyCode.J); // Shooting
         isAimingUp = Input.GetKey(KeyCode.W); // Aiming up
         isAimingDown = Input.GetKey(KeyCode.S) && !isCrouching; // Aiming down
+        
+        if (!isGrounded && rb.velocity.y < 0 && Input.GetKey(KeyCode.LeftControl))
+        {
+            isFastFalling = true;
+        }
+        else
+        {
+            isFastFalling = false;
+        }
 
         CheckIfGrounded();
     }
@@ -86,6 +102,15 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
             isMoving = (horizontalInput != 0);
+        }
+        
+        if (isFastFalling)
+        {
+            rb.gravityScale = originalGravityScale * fastFallMultiplier;
+        }
+        else
+        {
+            rb.gravityScale = originalGravityScale;
         }
 
         Flip();
