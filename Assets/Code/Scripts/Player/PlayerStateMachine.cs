@@ -108,6 +108,7 @@ public class PlayerStateMachine : MonoBehaviour
         // If not shooting
         else
         {
+            if(playerMovement.isFastFalling) return PlayerState.Fall;
             return PlayerState.Jump;
         }
         
