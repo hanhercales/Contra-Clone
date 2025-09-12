@@ -11,6 +11,9 @@ public class PlayerShooting : MonoBehaviour
     // Bullet variables
     [SerializeField] private float fireRate = 0.2f;
     [SerializeField] private float bulletSpeed = 10f;
+    
+    // Bullet container
+    [SerializeField] private Transform bulletContainer;
 
     // Player Movement
     private PlayerMovement playerMovement;
@@ -53,6 +56,14 @@ public class PlayerShooting : MonoBehaviour
         
         // Create the bullet
         GameObject bullet = Instantiate(bulletPrefab, currentBulletSpawn.position, Quaternion.identity);
+        if (bulletContainer != null)
+        {
+            bullet.transform.SetParent(bulletContainer); // Set the bullet's parent to the container
+        }
+        else
+        {
+            Debug.LogWarning("Bullet Container not set! Bullets will clutter the Hierarchy.");
+        }
         
         // Provide it speed
         Rigidbody2D bulletRB = bullet.GetComponent<Rigidbody2D>();
