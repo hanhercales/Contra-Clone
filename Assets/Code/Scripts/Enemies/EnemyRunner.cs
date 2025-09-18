@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class EnemyRunner : Enemy
@@ -6,10 +5,10 @@ public class EnemyRunner : Enemy
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private int initialMoveDirection = 1;
     [SerializeField] private bool destroyOnContact = true;
-    
+
     private Rigidbody2D rb;
     private int currentMoveDirection;
-    private bool isFacingRight;
+    private bool isFacingRight = true;
 
     protected override void Awake()
     {
@@ -17,18 +16,6 @@ public class EnemyRunner : Enemy
         rb = GetComponent<Rigidbody2D>();
         currentMoveDirection = initialMoveDirection;
         isAttacking = true;
-        
-        isFacingRight = (initialMoveDirection > 0);
-        Vector3 localScale = transform.localScale;
-        if (isFacingRight)
-        {
-            if (localScale.x < 0) localScale.x *= -1f; // Ensure positive if facing right
-        }
-        else
-        {
-            if (localScale.x > 0) localScale.x *= -1f; // Ensure negative if facing left
-        }
-        transform.localScale = localScale;
     }
 
     void FixedUpdate()
@@ -39,20 +26,20 @@ public class EnemyRunner : Enemy
             return;
         }
         
-        // Always going down
         rb.velocity = new Vector2(currentMoveDirection * moveSpeed, rb.velocity.y);
-
-        Flip();
+        Flip(currentMoveDirection);
     }
 
-    void Flip()
+    void Flip(int direction)
     {
-        bool shouldFaceRight = currentMoveDirection > 0;
+        if (direction == 0) return; // Don't flip if not moving
+
+        bool shouldFaceRight = direction > 0;
         if (isFacingRight != shouldFaceRight)
         {
             isFacingRight = shouldFaceRight;
             Vector3 localScale = transform.localScale;
-            localScale.x *= -1f;
+            localScale.x *= -1f; // Flip the X scale
             transform.localScale = localScale;
         }
     }
@@ -60,10 +47,10 @@ public class EnemyRunner : Enemy
     protected override void OnCollisionEnter2D(Collision2D collision)
     {
         base.OnCollisionEnter2D(collision);
+
         if (collision.gameObject.CompareTag("Player") && destroyOnContact)
         {
-            // I'll think about this later.
-            Die();
+            Die(); 
         }
     }
 }
