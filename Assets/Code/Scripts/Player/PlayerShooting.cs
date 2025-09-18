@@ -14,12 +14,13 @@ public class PlayerShooting : MonoBehaviour
     
     // Bullet container
     [SerializeField] private Transform bulletContainer;
-    
-    // Player movement
+
+    // Player Movement
     private PlayerMovement playerMovement;
-    
+    // private PlayerStateMachine playerStateMachine;
+
     // Shooting reload
-    private float nextFireTime;
+    private float nextFireTime; // Reload time
 
     private void Awake()
     {
@@ -39,38 +40,40 @@ public class PlayerShooting : MonoBehaviour
     {
         if (bulletPrefab == null)
         {
-            Debug.LogWarning("Bullet Prefab is null");
+            Debug.LogWarning(("Bullet Prefab is missing or not set."));
             return;
         }
-        
+
         // Determine bullet direction
         Vector2 shootDirection = GetBulletDirection();
         // Decide the axis
         Transform currentBulletSpawn = GetBulletSpawn(shootDirection);
         if (currentBulletSpawn == null)
         {
-            Debug.LogWarning("Bullet spawn is null");
+            Debug.LogWarning(("Bullet spawn is missing or not set."));
             return;
         }
+        
         // Create the bullet
         GameObject bullet = Instantiate(bulletPrefab, currentBulletSpawn.position, Quaternion.identity);
         if (bulletContainer != null)
         {
-            bullet.transform.SetParent(bulletContainer);
+            bullet.transform.SetParent(bulletContainer); // Set the bullet's parent to the container
         }
         else
         {
-            Debug.LogWarning("Bullet container is null");
+            Debug.LogWarning("Bullet Container not set! Bullets will clutter the Hierarchy.");
         }
         
+        // Provide it speed
         Rigidbody2D bulletRB = bullet.GetComponent<Rigidbody2D>();
         if (bulletRB != null)
         {
-            bulletRB.velocity = shootDirection * bulletSpeed;
+            bulletRB.velocity = shootDirection  * bulletSpeed;
         }
         else
         {
-            Debug.LogWarning("Bullet Prefab is missing a Rigidbody2D.");
+            Debug.LogWarning(("Bullet Prefab is missing a Rigidbody2D."));
         }
     }
 
@@ -80,7 +83,7 @@ public class PlayerShooting : MonoBehaviour
         if (direction == Vector2.down) return bottomBulletSpawn;
         return horizontalBulletSpawn;
     }
-
+    
     private Vector2 GetBulletDirection()
     {
         Vector2 direction = Vector2.zero;
@@ -90,12 +93,12 @@ public class PlayerShooting : MonoBehaviour
             direction = Vector2.up;
         }
         else if (playerMovement.isAimingDown)
-        { 
+        {
             direction = Vector2.down;
         }
         else
         {
-            direction = playerMovement.isFacingRight ? Vector2.right : Vector2.left;
+            direction = playerMovement.isFacingRight ?  Vector2.right : Vector2.left;
         }
         return direction;
     }

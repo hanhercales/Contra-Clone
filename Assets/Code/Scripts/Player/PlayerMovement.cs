@@ -1,17 +1,27 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))] // Ensures the player always has a Rigidbody2D
 public class PlayerMovement : MonoBehaviour
 {
     public Rigidbody2D rb;
     
-    [SerializeField] private float moveSpeed = 3f; // Player's movement speed
-    [SerializeField] private float jumpForce = 6f; // Player's jump force
-    [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float moveSpeed = 3f;
+    [SerializeField] private float jumpForce = 6f;
+    [SerializeField] private LayerMask groundLayer; // Define what is considered 'ground'
+    [SerializeField] private Transform groundCheck; // A point to check if the player is grounded
+    [SerializeField] private float groundCheckRadius = 0.2f;
     
-    [SerializeField] private float groundCheckRadius = 0.4f;
-    private float horizontalInput;
-    public bool isFacingRight { private set; get; } = true;
+    // Collider adjustment
+    [SerializeField] private Collider2D playerCollider;
+    private Vector2 originalColliderSize;
+    private Vector2 originalColliderOffset;
+    
+    [SerializeField] private float fastFallMultiplier = 2.0f;
+    public bool isFastFalling;
+    
+    private float horizontalInput; // Stores the current horizontal input received
+    public bool isFacingRight {private set; get;} = true;
+        
     public bool isGrounded;
     public bool isCrouching;
     public bool isMoving;
@@ -21,62 +31,161 @@ public class PlayerMovement : MonoBehaviour
     public bool isAimingUp;
     public bool isAimingDown;
 
+    private float originalGravityScale;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        originalGravityScale = rb.gravityScale;
+        
+        if (playerCollider != null)
+        {
+            if (playerCollider is BoxCollider2D boxCollider)
+            {
+                originalColliderSize = boxCollider.size;
+                originalColliderOffset = boxCollider.offset;
+            }
+            else
+            {
+                Debug.LogWarning("Player collider is not a BoxCollider2D");
+            }
+        }
     }
 
     private void Update()
     {
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-
+        horizontalInput = Input.GetAxisRaw("Horizontal"); 
+        if(rb.velocity != Vector2.zero) isMoving = true;
+        else isMoving = false;
+        
+        // Jumping
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Jump();
         }
 
-        isShooting = Input.GetKey(KeyCode.J);
-        isAimingUp = Input.GetKey(KeyCode.W);
-        isAimingDown = Input.GetKey(KeyCode.S);
+        // Crouching
+        if (Input.GetKey(KeyCode.LeftControl) && isGrounded)
+        {
+            Crouch();
+        }
+        else if (Input.GetKeyUp(KeyCode.LeftControl) || (!isGrounded && isCrouching))
+        {
+            StopCrouching();
+        }
+        
+        // Shooting and Aiming
+        isShooting = Input.GetKey(KeyCode.J); // Shooting
+        isAimingUp = Input.GetKey(KeyCode.W); // Aiming up
+        isAimingDown = Input.GetKey(KeyCode.S) && !isCrouching; // Aiming down
+        
+        if (!isGrounded && rb.velocity.y < 0 && Input.GetKey(KeyCode.LeftControl))
+        {
+            isFastFalling = true;
+        }
+        else
+        {
+            isFastFalling = false;
+        }
 
         CheckIfGrounded();
     }
 
     private void FixedUpdate()
     {
-        rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+        if (isCrouching)
+        {
+            rb.velocity = new Vector2(0f, rb.velocity.y);
+            isMoving = false; // Set isMoving to false
+        }
+        else
+        {
+            rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+            isMoving = (horizontalInput != 0);
+        }
+        
+        if (isFastFalling)
+        {
+            rb.gravityScale = originalGravityScale * fastFallMultiplier;
+        }
+        else
+        {
+            rb.gravityScale = originalGravityScale;
+        }
+
         Flip();
     }
+    
+    public void SetHorizontalMovement(float input)
+    {
+        horizontalInput = input;
+    }
+
 
     public void Jump()
     {
-        if (isGrounded)
+        if (isGrounded && !isCrouching)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             isGrounded = false;
+
+            if (isCrouching) StopCrouching();
         }
     }
 
+    public void Crouch()
+    {
+        if (!isCrouching && isGrounded)
+        {
+            isCrouching = true;
+            if (playerCollider is BoxCollider2D boxCollider)
+            {
+                boxCollider.size = new Vector2(originalColliderSize.x, originalColliderSize.y * 0.5f);
+                boxCollider.offset = new Vector2(originalColliderOffset.x, originalColliderOffset.y - originalColliderSize.y * 0.25f);
+            }
+        }
+    }
+
+    public void StopCrouching()
+    {
+        if (isCrouching)
+        {
+            isCrouching = false;
+            if (playerCollider is BoxCollider2D boxCollider)
+            {
+                boxCollider.size = originalColliderSize;
+                boxCollider.offset = originalColliderOffset;
+            }
+        }
+    }
+    
+    // public void StopMovement() { rb.velocity = new Vector2(0, rb.velocity.y); }
+
     private void CheckIfGrounded()
-    {   
+    {
         bool currentlyGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         isGrounded = currentlyGrounded;
     }
-    
+
     private void Flip()
     {
+        if (isCrouching || isDead || isHurt) return;
+        
         if ((isFacingRight && horizontalInput < 0f) || (!isFacingRight && horizontalInput > 0f))
         {
             isFacingRight = !isFacingRight;
             Vector3 localScale = transform.localScale;
-            localScale.x *= -1f;
+            localScale.x *= -1f; // Flip the X scale
             transform.localScale = localScale;
         }
     }
-
+    
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        }
     }
 }
