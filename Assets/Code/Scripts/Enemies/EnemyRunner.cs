@@ -9,7 +9,7 @@ public class EnemyRunner : Enemy
     
     private Rigidbody2D rb;
     private int currentMoveDirection;
-    private bool isFacingRight = true;
+    private bool isFacingRight;
 
     protected override void Awake()
     {
@@ -17,6 +17,18 @@ public class EnemyRunner : Enemy
         rb = GetComponent<Rigidbody2D>();
         currentMoveDirection = initialMoveDirection;
         isAttacking = true;
+        
+        isFacingRight = (initialMoveDirection > 0);
+        Vector3 localScale = transform.localScale;
+        if (isFacingRight)
+        {
+            if (localScale.x < 0) localScale.x *= -1f; // Ensure positive if facing right
+        }
+        else
+        {
+            if (localScale.x > 0) localScale.x *= -1f; // Ensure negative if facing left
+        }
+        transform.localScale = localScale;
     }
 
     void FixedUpdate()
@@ -30,14 +42,12 @@ public class EnemyRunner : Enemy
         // Always going down
         rb.velocity = new Vector2(currentMoveDirection * moveSpeed, rb.velocity.y);
 
-        Flip(currentMoveDirection);
+        Flip();
     }
 
-    void Flip(int direction)
+    void Flip()
     {
-        if (direction == 0) return;
-
-        bool shouldFaceRight = direction > 0;
+        bool shouldFaceRight = currentMoveDirection > 0;
         if (isFacingRight != shouldFaceRight)
         {
             isFacingRight = shouldFaceRight;
