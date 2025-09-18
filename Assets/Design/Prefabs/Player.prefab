@@ -171,7 +171,7 @@ GameObject:
   - component: {fileID: 2561240949281979480}
   - component: {fileID: 900889868940309757}
   - component: {fileID: 8234248460817403765}
-  - component: {fileID: 3136833650401772677}
+  - component: {fileID: 7841512931434751602}
   - component: {fileID: 451087356350307733}
   - component: {fileID: 7828175688550609389}
   m_Layer: 0
@@ -298,7 +298,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!61 &8234248460817403765
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -344,7 +344,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.125, y: 1.125}
   m_EdgeRadius: 0
---- !u!114 &3136833650401772677
+--- !u!114 &7841512931434751602
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -353,10 +353,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 8692200919473423073}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a1ebed2662f42346aa102a2884353ed, type: 3}
+  m_Script: {fileID: 11500000, guid: 87bbbd28b6273f84290966ea0473749a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rb: {fileID: 900889868940309757}
+  rb: {fileID: 0}
   moveSpeed: 3
   jumpForce: 6
   groundLayer:
@@ -365,7 +365,7 @@ MonoBehaviour:
   groundCheck: {fileID: 2491784619566002766}
   groundCheckRadius: 0.2
   playerCollider: {fileID: 8234248460817403765}
-  fastFallMultiplier: 3
+  fastFallMultiplier: 2
   isFastFalling: 0
   isGrounded: 0
   isCrouching: 0
@@ -401,7 +401,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 449ec47a4fc15bf40b08918316a8da11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletPrefab: {fileID: 7440390516452497602, guid: 3f4a07bdf1a020349b6fa0a618ba8922, type: 3}
+  bulletPrefab: {fileID: 292744272010396441, guid: 8d02fb462ecfe2b46bf76794394c0ae6, type: 3}
   topBulletSpawn: {fileID: 4511116971761983614}
   bottomBulletSpawn: {fileID: 281362276735422829}
   horizontalBulletSpawn: {fileID: 2049619817407264415}

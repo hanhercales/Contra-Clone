@@ -1,18 +1,25 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyBullet : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private float lifeTime = 3f;
+    [SerializeField] private int damage = 1;
+
+    private void Start()
     {
-        
+        Destroy(gameObject, lifeTime);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        
+        if (other.CompareTag("Player"))
+        {
+            Debug.Log("Enemy bullet has hit Player!");
+            Destroy(gameObject);
+        }
+        else if (other.CompareTag("Obstacle"))
+        {
+            Destroy(gameObject);
+        }
     }
 }
