@@ -2,10 +2,9 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    [SerializeField] private float lifeTime = 3f; // Bullet disappears after this time
+    [SerializeField] private float lifeTime = 3f;
     [SerializeField] private int damage = 1;
-
-    private void Start()
+    void Start()
     {
         Destroy(gameObject, lifeTime);
     }
@@ -14,10 +13,9 @@ public class Bullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            Debug.Log("Bullet hit an enemy!");
+            Debug.Log("Bullet hit an enemy.");
             Destroy(gameObject);
         }
-        // If it hits a wall/obstacle
         else if (other.CompareTag("Obstacle"))
         {
             Destroy(gameObject);
