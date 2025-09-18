@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,25 +19,25 @@ public class PlayerStateMachine : MonoBehaviour
         RunShoot,
         RunShootUp,
         RunShootDown,
-        CrouchShoot,
         AirShoot,
         AirShootUp,
         AirShootDown,
+        CrouchShoot
     }
-    
+
     public PlayerState currentState;
-    
+
     public Animator animator;
     
     public Dictionary<PlayerState, string> stateAnimations;
-
-    private PlayerMovement playerMovement;
     
+    private PlayerMovement playerMovement;
+
     private void Awake()
     {
         playerMovement = GetComponent<PlayerMovement>();
     }
-    
+
     private void Start()
     {
         stateAnimations = new Dictionary<PlayerState, string>
@@ -44,29 +45,29 @@ public class PlayerStateMachine : MonoBehaviour
             { PlayerState.Idle, "Idle" },
             { PlayerState.Run, "Run" },
             { PlayerState.Jump, "Jump" },
-            { PlayerState.Crouch, "Crouch" },
             { PlayerState.Fall, "Fall" },
+            { PlayerState.Crouch, "Crouch" },
             { PlayerState.Hurt, "Hurt" },
             { PlayerState.Die, "Die" },
             { PlayerState.Shoot, "Shoot" },
-            { PlayerState.ShootUp, "ShootUp"},
+            { PlayerState.ShootUp, "ShootUp" },
             { PlayerState.ShootDown, "ShootDown" },
+            { PlayerState.CrouchShoot, "CrouchShoot" },
             { PlayerState.RunShoot, "RunShoot" },
             { PlayerState.RunShootUp, "RunShootUp" },
             { PlayerState.RunShootDown, "RunShootDown" },
-            { PlayerState.CrouchShoot, "CrouchShoot" },
             { PlayerState.AirShoot, "AirShoot" },
             { PlayerState.AirShootUp, "AirShootUp" },
             { PlayerState.AirShootDown, "AirShootDown" }
         };
-        
+            
         ChangeState(PlayerState.Idle);
     }
 
     private void Update()
     {
         PlayerState newState = GetNextState();
-        
+
         if (currentState != newState)
         {
             ChangeState(newState);
@@ -75,55 +76,35 @@ public class PlayerStateMachine : MonoBehaviour
 
     public PlayerState GetNextState()
     {
-        PlayerState highPriorityState = CheckHighPriorityStates();
-        if (highPriorityState != PlayerState.Idle)
-        {
-            return highPriorityState;
-        }
-        
-        // Airborne/Grounded check
-        if (!playerMovement.isGrounded)
-        {
-            return GetAirborneState();
-        }
-        else
-        {
-            return GetGroundedState();
-        }
+        PlayerState highPriorityState = CheckHighPriorityState();
+        if(highPriorityState != PlayerState.Idle) return highPriorityState;
+
+        if (!playerMovement.isGrounded) return GetAirBorneState();
+        else return GetGroundedState();
     }
 
-    private PlayerState CheckHighPriorityStates()
+    private PlayerState CheckHighPriorityState()
     {
         if (playerMovement.isDead) return PlayerState.Die;
         if (playerMovement.isHurt) return PlayerState.Hurt;
         return PlayerState.Idle;
     }
 
-    private PlayerState GetAirborneState()
+    private PlayerState GetAirBorneState()
     {
-        if (playerMovement.isShooting)
-        {
-            return GetAirborneShootingState();
-        }
-        // If not shooting
+        if (playerMovement.isShooting) return GetAirBorneShootingState();
         else
         {
             if(playerMovement.isFastFalling) return PlayerState.Fall;
             return PlayerState.Jump;
         }
-        
     }
 
-    private PlayerState GetAirborneShootingState()
+    private PlayerState GetAirBorneShootingState()
     {
-        if (playerMovement.isShooting)
-        {
-            if (playerMovement.isAimingUp) return PlayerState.AirShootUp;
-            if (playerMovement.isAimingDown) return PlayerState.AirShootDown;
-            return PlayerState.AirShoot;
-        }
-
-        return PlayerState.Fall;
+        if (playerMovement.isAimingUp) return PlayerState.AirShootUp;
+        if (playerMovement.isAimingDown) return PlayerState.AirShootDown;
+        return PlayerState.AirShoot;
     }
 
     private PlayerState GetGroundedState()
@@ -148,7 +129,6 @@ public class PlayerStateMachine : MonoBehaviour
             if (playerMovement.isAimingDown) return PlayerState.RunShootDown;
             return PlayerState.RunShoot;
         }
-
         return PlayerState.Run;
     }
 
@@ -161,17 +141,16 @@ public class PlayerStateMachine : MonoBehaviour
 
     public void ChangeState(PlayerState newState)
     {
-        if (currentState == newState) return;
-        
+        if(currentState == newState) return;
+
         currentState = newState;
         if (stateAnimations.ContainsKey(newState))
         {
-            Debug.Log("Changing state to: " + stateAnimations[newState]);
             animator.Play(stateAnimations[newState]);
         }
         else
         {
-            Debug.LogError("Animation not found for state: " + newState);
+            Debug.LogError("State animation not found");
         }
     }
 }
