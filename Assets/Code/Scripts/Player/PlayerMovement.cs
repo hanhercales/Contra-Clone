@@ -3,6 +3,10 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))] // Ensures the player always has a Rigidbody2D
 public class PlayerMovement : MonoBehaviour
 {
+    public float healthPoint = 5f;
+    public float maxHealthPoint = 5f;
+    [SerializeField] private GameObject healthPanel;
+    
     public Rigidbody2D rb;
     
     [SerializeField] private float moveSpeed = 3f;
@@ -50,6 +54,9 @@ public class PlayerMovement : MonoBehaviour
                 Debug.LogWarning("Player collider is not a BoxCollider2D");
             }
         }
+        
+        healthPoint = maxHealthPoint;
+        UpdateHealthIcons();
     }
 
     private void Update()
@@ -115,6 +122,25 @@ public class PlayerMovement : MonoBehaviour
 
         Flip();
     }
+
+    public void UpdateHealthIcons()
+    {
+        if (healthPanel.transform.childCount < healthPoint)
+        {
+            Debug.Log("HP > Max HP");
+            return;
+        }
+        
+        for (int i = 0; i < healthPoint; i++)
+        {
+            healthPanel.transform.GetChild(i).gameObject.SetActive(true);
+        }
+
+        for (int i = (int)healthPoint; i < maxHealthPoint; i++)
+        {
+            healthPanel.transform.GetChild(i).gameObject.SetActive(false);
+        }
+    }
     
     public void SetHorizontalMovement(float input)
     {
@@ -178,6 +204,27 @@ public class PlayerMovement : MonoBehaviour
             localScale.x *= -1f; // Flip the X scale
             transform.localScale = localScale;
         }
+    }
+
+    public void TakeDamage(float damage)
+    {
+        healthPoint -= damage;
+        if (healthPoint <= 0)
+        {
+            isDead = true;
+            Die();
+        }
+        else
+        {
+            isHurt = true;
+            UpdateHealthIcons();
+        }
+    }
+
+    private void Die()
+    {
+        if(isDead)
+            gameObject.SetActive(false);
     }
     
     private void OnDrawGizmos()

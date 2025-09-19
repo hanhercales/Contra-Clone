@@ -15,6 +15,7 @@ public class EnemyBullet : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Debug.Log("Enemy bullet has hit Player!");
+            other.GetComponent<PlayerMovement>().TakeDamage(1);
             Destroy(gameObject);
         }
         else if (other.CompareTag("Obstacle"))

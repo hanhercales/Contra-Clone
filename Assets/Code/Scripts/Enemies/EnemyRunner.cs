@@ -63,7 +63,11 @@ public class EnemyRunner : Enemy
         {
             Die();
         }
-        // Adding logic to deal damage
+
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            collision.gameObject.GetComponent<PlayerMovement>().TakeDamage(damageToPlayer);
+        }
     }
     
     private void OnDrawGizmosSelected()
