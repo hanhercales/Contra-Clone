@@ -11,12 +11,13 @@ public class EnemyShooter : Enemy
     
     [SerializeField] private int initialFacingDirection = 1;
     [SerializeField] private bool aimVertically = false;
-
+    
     [SerializeField] private Transform playerTarget;
-
+    [SerializeField] private Transform bulletContainer;
+    
     private float nextFireTime;
     private bool isFacingRight = true;
-    
+
     protected override void Awake()
     {
         base.Awake();
@@ -24,10 +25,10 @@ public class EnemyShooter : Enemy
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null) playerTarget = playerObj.transform;
-            else Debug.LogWarning("Player not found for EnemyShooter: " + gameObject.name);
+            else Debug.LogWarning("No player target found");
         }
-        nextFireTime = Time.time;
-        
+        nextFireTime = Time.time + fireRate;
+
         isFacingRight = initialFacingDirection > 0;
         Vector3 currentScale = transform.localScale;
         if (isFacingRight && currentScale.x < 0) currentScale.x *= -1;
@@ -38,16 +39,15 @@ public class EnemyShooter : Enemy
     void Update()
     {
         if (isDead) return;
-        isAttacking = false; 
-
+        isAttacking = false;
+        
         if (playerTarget == null || bulletSpawn == null || enemyBulletPrefab == null) return;
-
+        
         float distanceToPlayer = Vector2.Distance(transform.position, playerTarget.position);
-
-        if (distanceToPlayer <= detectionRange)
+        if (distanceToPlayer < detectionRange)
         {
             isAttacking = true;
-            if (Time.time >= nextFireTime)
+            if (Time.time > nextFireTime)
             {
                 Shoot();
                 nextFireTime = Time.time + fireRate;
@@ -58,7 +58,6 @@ public class EnemyShooter : Enemy
     void Shoot()
     {
         Vector2 shootDirection;
-        
         if (aimVertically)
         {
             shootDirection = (playerTarget.position - bulletSpawn.position).normalized;
@@ -66,23 +65,33 @@ public class EnemyShooter : Enemy
         else
         {
             float dirX = playerTarget.position.x > transform.position.x ? 1f : -1f;
-            shootDirection = new Vector2(dirX, 0).normalized;
+            shootDirection = new  Vector2(dirX, 0).normalized;
         }
-
+        
         GameObject bullet = Instantiate(enemyBulletPrefab, bulletSpawn.position, Quaternion.identity);
-    
-        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        if (bulletRb != null)
+        // Set into bullet container
+        if (bulletContainer != null)
         {
-            bulletRb.velocity = shootDirection * bulletSpeed;
+            bullet.transform.SetParent(bulletContainer); // Set the parent
         }
         else
         {
-            Debug.LogWarning("Enemy Bullet Prefab is missing a Rigidbody2D!");
+            Debug.LogWarning("No bullet container found");
+        }
+        
+        Rigidbody2D bulletRB = bullet.GetComponent<Rigidbody2D>();
+
+        if (bulletRB != null)
+        {
+            bulletRB.velocity = shootDirection * bulletSpeed;
+        }
+        else
+        {
+            Debug.LogWarning("Bullet is missing a Rigidbody2D.");
         }
     }
-    
-    void OnDrawGizmosSelected()
+
+    private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
