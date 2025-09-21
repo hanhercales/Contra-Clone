@@ -28,12 +28,9 @@ public class EnemyShooter : Enemy
             else Debug.LogWarning("No player target found");
         }
         nextFireTime = Time.time + fireRate;
-
-        isFacingRight = initialFacingDirection > 0;
-        Vector3 currentScale = transform.localScale;
-        if (isFacingRight && currentScale.x < 0) currentScale.x *= -1;
-        if (!isFacingRight && currentScale.x > 0) currentScale.x *= -1;
-        transform.localScale = currentScale;
+        
+        isFacingRight = (initialFacingDirection > 1);
+        ApplyFacingDirection();
     }
 
     void Update()
@@ -47,6 +44,7 @@ public class EnemyShooter : Enemy
         if (distanceToPlayer < detectionRange)
         {
             isAttacking = true;
+            FlipToPlayer();
             if (Time.time > nextFireTime)
             {
                 Shoot();
@@ -64,8 +62,7 @@ public class EnemyShooter : Enemy
         }
         else
         {
-            float dirX = playerTarget.position.x > transform.position.x ? 1f : -1f;
-            shootDirection = new  Vector2(dirX, 0).normalized;
+            shootDirection = new Vector2(isFacingRight ? 1f : -1f, 0).normalized;
         }
         
         GameObject bullet = Instantiate(enemyBulletPrefab, bulletSpawn.position, Quaternion.identity);
@@ -88,6 +85,26 @@ public class EnemyShooter : Enemy
         else
         {
             Debug.LogWarning("Bullet is missing a Rigidbody2D.");
+        }
+    }
+
+    private void ApplyFacingDirection()
+    {
+        Vector3 currentScale = transform.localScale;
+        if (isFacingRight && currentScale.x < 0) currentScale.x *= -1;
+        if (!isFacingRight && currentScale.x > 0) currentScale.x *= -1;
+        transform.localScale = currentScale;
+    }
+
+    private void FlipToPlayer()
+    {
+        if (playerTarget == null) return;
+        
+        bool playerIsToTheRight = playerTarget.position.x > transform.position.x;
+        if (isFacingRight != playerIsToTheRight)
+        {
+            isFacingRight = playerIsToTheRight;
+            ApplyFacingDirection();
         }
     }
 

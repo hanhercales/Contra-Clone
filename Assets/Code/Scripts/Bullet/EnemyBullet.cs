@@ -14,7 +14,12 @@ public class EnemyBullet : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log("Enemy bullet has hit Player!");
+            PlayerHealth playerHealth = other.gameObject.GetComponent<PlayerHealth>();
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(damage);
+                Debug.Log("Enemy bullet hit player for " + damage + " damage.");
+            }
             Destroy(gameObject);
         }
         else if (other.CompareTag("Obstacle"))

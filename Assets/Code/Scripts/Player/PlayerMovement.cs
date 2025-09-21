@@ -25,8 +25,9 @@ public class PlayerMovement : MonoBehaviour
     public bool isGrounded;
     public bool isCrouching;
     public bool isMoving;
-    public bool isDead;
-    public bool isHurt;
+
+    public bool isDead {get; set;}
+    public bool isHurt {get; set;}
     public bool isShooting;
     public bool isAimingUp;
     public bool isAimingDown;
@@ -93,7 +94,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isCrouching)
+        if (isDead)
+        {
+            rb.velocity = Vector2.zero;
+            return;
+        }
+        else if (isCrouching)
         {
             rb.velocity = new Vector2(0f, rb.velocity.y);
             isMoving = false; // Set isMoving to false
