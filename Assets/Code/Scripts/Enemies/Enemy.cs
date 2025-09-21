@@ -4,10 +4,10 @@ public class Enemy : MonoBehaviour
 {
     [SerializeField] protected int maxHealth;
     protected int currentHealth;
-    [SerializeField] protected int damageToPlayer;
-    
-    public bool isDead {get; protected set;}
-    public bool isAttacking {get; protected set;}
+    [SerializeField] protected int damageToPlayer = 1;
+
+    public bool isDead;
+    public bool isAttacking;
 
     protected virtual void Awake()
     {
@@ -36,15 +36,24 @@ public class Enemy : MonoBehaviour
         
         isDead = true;
         Debug.Log(gameObject.name + " died!");
+        // New
+        GetComponent<Collider2D>().enabled = false;
+        if (GetComponent<Rigidbody2D>() != null) GetComponent<Rigidbody2D>().simulated = false;
+        // New
         Destroy(gameObject, 0.5f);
     }
 
     protected virtual void OnCollisionEnter2D(Collision2D other)
-    {
+    { // Modified
+        if (isDead) return;
         if (other.gameObject.CompareTag("Player"))
         {
-            Debug.Log(gameObject.name + " hit " + damageToPlayer + "damage to player.");
+            PlayerHealth playerHealth = other.gameObject.GetComponent<PlayerHealth>();
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(damageToPlayer);
+                Debug.Log(gameObject.name + " hit " + damageToPlayer + "damage to player.");
+            }
         }
-            
-    }
+    } // Modified
 }

@@ -16,7 +16,7 @@ public class EnemyShooter : Enemy
     [SerializeField] private Transform bulletContainer;
     
     private float nextFireTime;
-    private bool isFacingRight = true;
+    private bool isFacingRight = true; // Kept as private for internal use
 
     protected override void Awake()
     {
@@ -25,15 +25,13 @@ public class EnemyShooter : Enemy
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null) playerTarget = playerObj.transform;
-            else Debug.LogWarning("No player target found");
+            else Debug.LogWarning("No player target found for " + gameObject.name);
         }
         nextFireTime = Time.time + fireRate;
 
-        isFacingRight = initialFacingDirection > 0;
-        Vector3 currentScale = transform.localScale;
-        if (isFacingRight && currentScale.x < 0) currentScale.x *= -1;
-        if (!isFacingRight && currentScale.x > 0) currentScale.x *= -1;
-        transform.localScale = currentScale;
+        // Set initial facing direction and apply scale
+        isFacingRight = (initialFacingDirection > 0);
+        ApplyFacingDirection(); // Call a helper to apply the initial flip
     }
 
     void Update()
@@ -47,6 +45,8 @@ public class EnemyShooter : Enemy
         if (distanceToPlayer < detectionRange)
         {
             isAttacking = true;
+            FlipToPlayer(); // New
+
             if (Time.time > nextFireTime)
             {
                 Shoot();
@@ -64,15 +64,16 @@ public class EnemyShooter : Enemy
         }
         else
         {
-            float dirX = playerTarget.position.x > transform.position.x ? 1f : -1f;
-            shootDirection = new  Vector2(dirX, 0).normalized;
+            // Modified
+            shootDirection = new Vector2(isFacingRight ? 1f : -1f, 0).normalized;
+            // Modified
         }
         
         GameObject bullet = Instantiate(enemyBulletPrefab, bulletSpawn.position, Quaternion.identity);
-        // Set into bullet container
+        
         if (bulletContainer != null)
         {
-            bullet.transform.SetParent(bulletContainer); // Set the parent
+            bullet.transform.SetParent(bulletContainer);
         }
         else
         {
@@ -90,6 +91,30 @@ public class EnemyShooter : Enemy
             Debug.LogWarning("Bullet is missing a Rigidbody2D.");
         }
     }
+
+    // New
+    private void ApplyFacingDirection()
+    {
+        Vector3 currentScale = transform.localScale;
+        if (isFacingRight && currentScale.x < 0) currentScale.x *= -1; // If should face right but scaled left, flip
+        if (!isFacingRight && currentScale.x > 0) currentScale.x *= -1; // If should face left but scaled right, flip
+        transform.localScale = currentScale;
+    }
+    // New
+
+    // New
+    private void FlipToPlayer()
+    {
+        if (playerTarget == null) return;
+
+        bool playerIsToTheRight = playerTarget.position.x > transform.position.x;
+        if (isFacingRight != playerIsToTheRight)
+        {
+            isFacingRight = playerIsToTheRight;
+            ApplyFacingDirection();
+        }
+    }
+    // New
 
     private void OnDrawGizmosSelected()
     {

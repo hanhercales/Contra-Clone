@@ -13,9 +13,17 @@ public class Bullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            Debug.Log("Bullet hit an enemy.");
+            // NEW
+            Enemy enemy = other.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(damage);
+                Debug.Log("Player bullet hit " + other.name + " for " + damage + " damage!");
+            }
+            // NEW
             Destroy(gameObject);
         }
+        
         else if (other.CompareTag("Obstacle"))
         {
             Destroy(gameObject);
